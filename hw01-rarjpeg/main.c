@@ -19,9 +19,10 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  if (is_zipfile(file)) {
-    printf("this is a zip archive\n");
-    printf("files:\n\n %s\n", list_zipfiles(file));
+  zip_summary summary = read_zip(file);
+  if (summary.is_zip) {
+  //  printf("this is a zip archive\n");
+  //  printf("files:\n\n %s\n", summary.filenames);
   } else {
     printf("the file is not a zip archive\n");
   }
