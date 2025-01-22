@@ -1,84 +1,71 @@
 #include "zip_util.h"
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <zlib.h>
 
-static bool find_eo_dir(FILE* file, eo_central_dir* dir);
+static void find_eocd(FILE* file, end_of_central_dir* dir, uint32_t* eocd_offset);
+static void print_filenames(FILE* file, uint32_t cd_offset, unsigned short num_entries);
 
-zip_summary read_zip(FILE* file)
+void print_zip_files(FILE* file)
 {
-  zip_summary zs;
-  zs.has_error = false;
-  eo_central_dir* ecd = malloc(sizeof(eo_central_dir));
-  bool has_ecd = find_eo_dir(file, ecd);
-
-  printf("entries: %d\n", ecd->num_entries);
-  printf("sig: 0x%08x\n", ecd->signature);
-  printf("offset from ecd: %d\n", ecd->central_directory_offset);
-
-  if (!has_ecd) {
-    free(ecd);
-    zs.is_zip = false;
-    zs.filenames = "";
-    return zs;
-  }
-
-  fseek(file, 0, SEEK_END);
-  long file_size = ftell(file);
-  fseek(file, 0, SEEK_SET);
-
-//  for (long i = 0; i < file_size;) {
-//    uint32_t sig;
-//    fread(&sig, sizeof(uint32_t), 1, file);
-//    if (sig == GLOBAL_FILE_HEADER_SIGNATURE) {
-//      printf("file header offset %ld\n", ftell(file) - 4);
-//      fseek(file, -4, SEEK_CUR);
-//      break;
-//    }
-//    fseek(file, ++i, SEEK_SET);
-//  }
-
-  fseek(file, ecd->central_directory_offset, SEEK_SET);
-
-  for (int i = 0; i < ecd->num_entries; i++) {
-    global_file_header gfh;
-    fread(&gfh, sizeof(global_file_header), 1, file);
-
-    if (gfh.signature == GLOBAL_FILE_HEADER_SIGNATURE) {
-      char filename[gfh.filename_length + 1];
-      filename[gfh.filename_length] = '\0';
-      fread(filename, gfh.filename_length, 1, file);
-      printf("filename: %s\n", filename);
-
-      fseek(file, gfh.extra_field_length + gfh.file_comment_length, SEEK_CUR);
-    } else {
-      printf("ERROR\n");
-    }
-  }
-
-  zs.is_zip = true;
-  zs.filenames = "";
-
-  return zs;
+  end_of_central_dir* eocd = malloc(sizeof(end_of_central_dir));
+  uint32_t eocd_offset;
+  find_eocd(file, eocd, &eocd_offset);
+  uint32_t cd_offset = eocd_offset - eocd->central_directory_size;
+  print_filenames(file, cd_offset, eocd->num_entries);
+  free(eocd);
 }
 
-static bool find_eo_dir(FILE* file, eo_central_dir* dir)
+bool is_zipfile(FILE* file)
 {
   fseek(file, 0, SEEK_END);
   long file_size = ftell(file);
   fseek(file, file_size, SEEK_SET);
 
   while (file_size > 0) {
-    fread(dir, sizeof(eo_central_dir), 1, file);
-    if (dir->signature == EO_CENTRAL_DIR_SIGNATURE) {
+    uint32_t sig;
+    fread(&sig, sizeof(uint32_t), 1, file);
+    if (sig == EO_CENTRAL_DIR_SIGNATURE) {
       return true;
     }
-
     fseek(file, --file_size, SEEK_SET);
   }
 
   return false;
+}
+
+static void print_filenames(FILE* file, uint32_t cd_offset, unsigned short num_entries)
+{
+  fseek(file, cd_offset, SEEK_SET);
+  for (int i = 0; i < num_entries; i++) {
+    global_file_header gfh;
+    fread(&gfh, sizeof(global_file_header), 1, file);
+
+    if (gfh.signature != GLOBAL_FILE_HEADER_SIGNATURE) {
+      printf("ERROR: file header signature not found\n");
+      break;
+    }
+
+    char filename[gfh.filename_length + 1];
+    filename[gfh.filename_length] = '\0';
+    fread(filename, gfh.filename_length, 1, file);
+    printf("%s\n", filename);
+
+    fseek(file, gfh.extra_field_length + gfh.file_comment_length, SEEK_CUR);
+  }
+}
+
+static void find_eocd(FILE* file, end_of_central_dir* eocd, uint32_t* eocd_offset)
+{
+  fseek(file, 0, SEEK_END);
+  long file_size = ftell(file);
+  fseek(file, file_size, SEEK_SET);
+
+  while (file_size > 0) {
+    fread(eocd, sizeof(end_of_central_dir), 1, file);
+    if (eocd->signature == EO_CENTRAL_DIR_SIGNATURE) {
+      *eocd_offset = ftell(file) - sizeof(end_of_central_dir);
+      return;
+    }
+
+    fseek(file, --file_size, SEEK_SET);
+  }
 }
