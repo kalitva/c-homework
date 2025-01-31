@@ -1,5 +1,8 @@
-#include "weather_client.h"
 #include <stdio.h>
+
+#include "weather.h"
+#include "weather_client.h"
+#include "weather_view.h"
 
 
 int main(int argc, char** argv)
@@ -9,5 +12,8 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  get_weather(argv[1]);
+  char* city = argv[1];
+  weather* w = get_weather(city);
+  print_weather(w);
+  weather_free(w);
 }
