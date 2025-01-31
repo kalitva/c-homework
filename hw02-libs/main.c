@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "weather.h"
@@ -18,6 +19,12 @@ int main(int argc, char** argv)
 
   if (w == NULL) {
     fprintf(stderr, "request failed\n");
+    return 1;
+  }
+
+  if (w->has_error == true) {
+    fprintf(stderr, "%s\n", w->error_message);
+    free(w);
     return 1;
   }
 

@@ -1,4 +1,5 @@
 #include <curl/curl.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,31 +44,39 @@ weather* get_weather(char* city)
   return w;
 }
 
-void weather_free(weather *weather)
+void weather_free(weather* w)
 {
-  day_forecast* df = weather->forecast;
-  for (int i = 0; i < weather->days; i++) {
+  day_forecast* df = w->forecast;
+  for (int i = 0; i < w->days; i++) {
     free(df[i].date);
     free(df[i].max_temperature);
     free(df[i].min_temperature);
     free(df[i].temperature);
   }
-  free(weather->forecast);
-  current_contiditions cc = weather->conditions;
+  free(w->forecast);
+  current_contiditions cc = w->conditions;
   free(cc.temperature);
   free(cc.cloudcover);
   free(cc.humidity);
   free(cc.pressure);
   free(cc.visibility);
-  free(weather);
+  free(w);
 }
 
 static weather* response_to_weather(memory* mem)
 {
   weather* w = malloc(sizeof(weather));
+  w->has_error = false;
   json_object* root = json_tokener_parse(mem->buf);
-  json_object* cc = json_object_array_get_idx(json_object_object_get(root, "current_condition"), 0);
 
+  // this usually happens on wrong location
+  if (root == NULL) {
+    w->has_error = true;
+    strcpy(w->error_message, mem->buf);
+    return w;
+  }
+
+  json_object* cc = json_object_array_get_idx(json_object_object_get(root, "current_condition"), 0);
   w->conditions.cloudcover = get_json_string(cc, "cloudcover");
   w->conditions.temperature = get_json_string(cc, "temp_C");
   w->conditions.humidity = get_json_string(cc , "humidity");

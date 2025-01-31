@@ -1,6 +1,8 @@
 #ifndef WEATHER_H
 #define WEATHER_H
 
+#include <stdbool.h>
+
 typedef struct {
   char* temperature;
   char* max_temperature;
@@ -20,6 +22,8 @@ typedef struct {
   current_contiditions conditions;
   day_forecast* forecast;
   int days;
+  bool has_error;
+  char error_message[100];
 } weather;
 
 #endif
