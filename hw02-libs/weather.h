@@ -2,18 +2,18 @@
 #define WEATHER_H
 
 typedef struct {
-  const char* temperature;
-  const char* max_temperature;
-  const char* min_temperature;
-  const char* date;
+  char* temperature;
+  char* max_temperature;
+  char* min_temperature;
+  char* date;
 } day_forecast;
 
 typedef struct {
-  const char* temperature;
-  const char* cloudcover;
-  const char* humidity;
-  const char* pressure;
-  const char* visibility;
+  char* temperature;
+  char* cloudcover;
+  char* humidity;
+  char* pressure;
+  char* visibility;
 } current_contiditions;
 
 typedef struct {

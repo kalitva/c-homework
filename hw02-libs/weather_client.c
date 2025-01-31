@@ -1,6 +1,4 @@
 #include <curl/curl.h>
-#include <json-c/json_object.h>
-#include <json-c/json_types.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +10,7 @@
 
 static size_t write_response(void* response, size_t size, size_t nmemb, memory* mem);
 static weather* response_to_weather(memory* mem);
+static char* get_json_string(json_object* json, char* key);
 
 weather* get_weather(char* city)
 {
@@ -32,10 +31,8 @@ weather* get_weather(char* city)
 
   CURLcode res = curl_easy_perform(curl_handle);
   if (res != CURLE_OK) {
-    fprintf(stderr, "request failed: %s\n", mem.buf);
+    return NULL;
   }
-
-  printf("%lu bytes retrieved\n", mem.size);
 
   weather* w = response_to_weather(&mem);
 
@@ -48,7 +45,20 @@ weather* get_weather(char* city)
 
 void weather_free(weather *weather)
 {
+  day_forecast* df = weather->forecast;
+  for (int i = 0; i < weather->days; i++) {
+    free(df[i].date);
+    free(df[i].max_temperature);
+    free(df[i].min_temperature);
+    free(df[i].temperature);
+  }
   free(weather->forecast);
+  current_contiditions cc = weather->conditions;
+  free(cc.temperature);
+  free(cc.cloudcover);
+  free(cc.humidity);
+  free(cc.pressure);
+  free(cc.visibility);
   free(weather);
 }
 
@@ -57,11 +67,12 @@ static weather* response_to_weather(memory* mem)
   weather* w = malloc(sizeof(weather));
   json_object* root = json_tokener_parse(mem->buf);
   json_object* cc = json_object_array_get_idx(json_object_object_get(root, "current_condition"), 0);
-  w->conditions.cloudcover = json_object_get_string(json_object_object_get(cc, "cloudcover"));
-  w->conditions.temperature = json_object_get_string(json_object_object_get(cc, "temp_C"));
-  w->conditions.humidity= json_object_get_string(json_object_object_get(cc, "humidity"));
-  w->conditions.pressure= json_object_get_string(json_object_object_get(cc, "pressure"));
-  w->conditions.visibility = json_object_get_string(json_object_object_get(cc, "visibility"));
+
+  w->conditions.cloudcover = get_json_string(cc, "cloudcover");
+  w->conditions.temperature = get_json_string(cc, "temp_C");
+  w->conditions.humidity = get_json_string(cc , "humidity");
+  w->conditions.pressure = get_json_string(cc, "pressure");
+  w->conditions.visibility = get_json_string(cc, "visibility");
 
   json_object* days = json_object_object_get(root, "weather");
   w->days = json_object_array_length(days);
@@ -70,15 +81,24 @@ static weather* response_to_weather(memory* mem)
   for (int i = 0; i < w->days ; i++) {
     json_object* day = json_object_array_get_idx(days, i);
     day_forecast* df = &(w->forecast[i]);
-    df->date = json_object_get_string(json_object_object_get(day, "date"));
-    df->min_temperature = json_object_get_string(json_object_object_get(day, "mintempC"));
-    df->max_temperature = json_object_get_string(json_object_object_get(day, "maxtempC"));
-    df->temperature = json_object_get_string(json_object_object_get(day, "avgtempC"));
+    df->date = get_json_string(day, "date");
+    df->min_temperature = get_json_string(day, "mintempC");
+    df->max_temperature = get_json_string(day, "maxtempC");
+    df->temperature = get_json_string(day, "avgtempC");
   }
 
   json_object_put(root);
 
   return w;
+}
+
+static char* get_json_string(json_object* json, char* key)
+{
+  const char* src = json_object_get_string(json_object_object_get(json, key));
+  char* dest = malloc(strlen(src));
+  strcpy(dest, src);
+
+  return dest;
 }
 
 static size_t write_response(void* response, size_t size, size_t nmemb, memory* mem)

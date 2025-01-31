@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "weather.h"
 #include "weather_client.h"
@@ -8,12 +9,20 @@
 int main(int argc, char** argv)
 {
   if (argc < 2) {
-    printf("a city required\n");
+    printf("city is required\n");
     return 1;
   }
 
   char* city = argv[1];
   weather* w = get_weather(city);
+
+  if (w == NULL) {
+    fprintf(stderr, "request failed\n");
+    return 1;
+  }
+
   print_weather(w);
   weather_free(w);
+
+  return 0;
 }
