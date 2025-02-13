@@ -1,0 +1,48 @@
+diff --git a/hw04-posix/clib/src/common/clib-package.c b/hw04-posix/clib/src/common/clib-package.c
+index a58eb70..6fc551d 100644
+--- a/hw04-posix/clib/src/common/clib-package.c
++++ b/hw04-posix/clib/src/common/clib-package.c
+@@ -664,11 +664,16 @@ clib_package_new_from_slug_with_package_name(const char *slug, int verbose,
+ #else
+       res = http_get(json_url);
+ #endif
+-      json = res->data;
++      if (!res) {
++        goto download;
++      }
+       _debug("status: %d", res->status);
+-      if (!res || !res->ok) {
++      if (!res->ok) {
++        http_get_free(res);
++        res = NULL;
+         goto download;
+       }
++      json = res->data;
+       log = "fetch";
+     }
+   }
+@@ -999,12 +1004,12 @@ cleanup:
+ #ifdef HAVE_PTHREADS
+ static void *fetch_package_file_thread(void *arg) {
+   fetch_package_file_thread_data_t *data = arg;
+-  int *status = malloc(sizeof(int));
++  int status;
+   int rc =
+       fetch_package_file_work(data->pkg, data->dir, data->file, data->verbose);
+-  *status = rc;
++  status = &rc;
+   (void)data->pkg->refs--;
+-  pthread_exit((void *)status);
++  pthread_exit((void *)&status);
+   return (void *)rc;
+ }
+ #endif
+@@ -1591,6 +1596,8 @@ cleanup:
+     list_iterator_destroy(iterator);
+   if (command)
+     free(command);
++  if (visited_packages)
++    clib_package_cleanup();
+ #ifdef HAVE_PTHREADS
+   if (NULL != pkg && NULL != pkg->src) {
+     if (pkg->src->len > 0) {
