@@ -14,10 +14,10 @@ char* current_date_time()
 
   struct timeval time;
   gettimeofday(&time, NULL);
-  long milliseconds = (time.tv_usec / 1000);
+  int milliseconds = (time.tv_usec / 1000);
 
   char* date_time_with_milliseconds = malloc(DATE_TIME_LENGTH);
-  sprintf(date_time_with_milliseconds, "%s.%ld", date_time, milliseconds);
+  sprintf(date_time_with_milliseconds, "%s.%d", date_time, milliseconds);
 
   return date_time_with_milliseconds;
 }

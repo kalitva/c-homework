@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -33,36 +34,11 @@ logger* log_init(char* filename, log_level level)
   return logger;
 }
 
-static int log_internal(logger* logger, log_level level, char* message);
+static pthread_mutex_t mutex;
 
 void log_set_level(logger* logger, log_level level)
 {
   logger->level = level;
-}
-
-int log_trace(logger* logger, char *message)
-{
-  return log_internal(logger, TRACE, message);
-}
-
-int log_debug(logger* logger, char *message)
-{
-  return log_internal(logger, DEBUG, message);
-}
-
-int log_info(logger* logger, char *message)
-{
-  return log_internal(logger, INFO, message);
-}
-
-int log_warn(logger* logger, char *message)
-{
-  return log_internal(logger, WARN, message);
-}
-
-int log_error(logger* logger, char *message)
-{
-  return log_internal(logger, ERROR, message);
 }
 
 void log_clean(logger* logger)
@@ -71,18 +47,24 @@ void log_clean(logger* logger)
   free(logger);
 }
 
-static int log_internal(logger* logger, log_level level, char* message)
+int _log_internal(logger* logger, log_level level, char* message, const char* caller, int line)
 {
   if (level < logger->level) {
     return 0;
   }
 
   char* date_time = current_date_time();
-  int bytes = fprintf(logger->file, "%s [%s] %s\n", date_time, levels[level], message);
-  free(date_time);
+
+  pthread_mutex_lock(&mutex);
+  int bytes = fprintf(logger->file, "%s [%s] %s %s line:%d\n",
+      date_time, levels[level], message, caller, line);
+  pthread_mutex_unlock (&mutex);
+
   if (!bytes) {
     logger->error_code = WRITE_FILE_ERROR;
   }
+
+  free(date_time);
 
   return logger->error_code;
 }
