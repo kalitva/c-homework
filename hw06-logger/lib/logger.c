@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "logger.h"
 #include "log_helper.h"
@@ -53,17 +54,27 @@ int _log_internal(logger* logger, log_level level, char* message, const char* ca
     return 0;
   }
 
-  char* date_time = current_date_time();
-
   pthread_mutex_lock(&mutex);
-  int bytes = fprintf(logger->file, "%s [%s] %s %s line:%d\n",
-      date_time, levels[level], message, caller, line);
+  char* date_time = current_date_time();
+  if (!date_time) {
+    logger->error_code = MEMORY_ALLOCATION_ERROR;
+    date_time = "";
+  }
+  fprintf(logger->file, LOG_MESSAGE_FORMAT, date_time, levels[level], message, caller, line);
+  char* stack_trace = NULL;
+  if (level == ERROR) {
+    stack_trace = get_stack_trace();
+    if (stack_trace) {
+      fprintf(logger->file, "%s\n", stack_trace);
+    } else {
+      logger->error_code = MEMORY_ALLOCATION_ERROR;
+    }
+  }
   pthread_mutex_unlock (&mutex);
 
-  if (!bytes) {
-    logger->error_code = WRITE_FILE_ERROR;
+  if (stack_trace) {
+    free(stack_trace);
   }
-
   free(date_time);
 
   return logger->error_code;

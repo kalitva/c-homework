@@ -3,8 +3,11 @@
 
 #include <stdio.h>
 
-#define FILE_NOT_FOUND_ERROR 1;
-#define WRITE_FILE_ERROR 2;
+#define LOG_MESSAGE_FORMAT "%s [%s] '%s'in %s line:%d\n"
+
+#define FILE_NOT_FOUND_ERROR 1
+#define WRITE_FILE_ERROR 2
+#define MEMORY_ALLOCATION_ERROR 3
 
 typedef enum {
   TRACE,

@@ -5,5 +5,6 @@
 #define DATE_TIME_FORMAT "%Y-%m-%d %H:%M:%S"
 
 char* current_date_time();
+char* get_stack_trace();
 
 #endif
