@@ -1,0 +1,8 @@
+#ifndef ERROR_CODES_H
+#define ERROR_CODES_H
+
+#define FILE_NOT_FOUND_ERROR 1
+#define CONFIG_NOT_FOUND_ERROR 2
+#define PARAM_NOT_FOUND_ERROR 3
+
+#endif
