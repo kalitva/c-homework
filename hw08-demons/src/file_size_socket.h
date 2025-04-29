@@ -2,7 +2,8 @@
 #define FILE_SIZE_SOCKET_H
 
 #define SOCKET_NAME "file-size.socket"
+#define MAX_PENDING_CONNECTIONS 5
 
-int listen_file(char* filename);
+int listen_file();
 
 #endif

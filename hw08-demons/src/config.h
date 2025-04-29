@@ -4,8 +4,8 @@
 #define PARAM_VALUE_SEPARATOR '='
 #define CONFIG_MAX_LINE 255
 
-int init_config(const char* path);
-int get_file(char* path);
+int init_config(const char* config_path);
+int get_filepath(char* filepath_dest);
 void destroy_config();
 
 #endif

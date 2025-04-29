@@ -8,28 +8,29 @@
 #include "file_size.h"
 #include "error_codes.h"
 
-static int get_size(char* path);
+static long get_size(const char* filepath);
 
-int get_file_size(char *path, int* result_size)
+int get_file_size(const char *filepath, long* result_size)
 {
-  if (access(path, F_OK) != 0) {
+  if (access(filepath, F_OK) != 0) {
     return FILE_NOT_FOUND_ERROR;
   }
-  *result_size = get_size(path);
+  *result_size = get_size(filepath);
+
   return 0;
 }
 
-static int get_size(char* path)
+static long get_size(const char* filepath)
 {
-  struct stat s;
-  stat(path, &s);
-  int size = s.st_size;
+  struct stat stats;
+  stat(filepath, &stats);
+  long size = stats.st_size;
 
-  if (!S_ISDIR(s.st_mode)) {
+  if (!S_ISDIR(stats.st_mode)) {
     return size;
   }
 
-  DIR* dir = opendir(path);
+  DIR* dir = opendir(filepath);
   struct dirent* dir_entry;
   while((dir_entry = readdir(dir))) {
     if (!strcmp(".", dir_entry->d_name)
@@ -37,7 +38,7 @@ static int get_size(char* path)
       continue;
     }
     char entry_path[PATH_MAX];
-    sprintf(entry_path, "%s/%s", path, dir_entry->d_name);
+    sprintf(entry_path, "%s/%s", filepath, dir_entry->d_name);
     size += get_size(entry_path);
   }
   closedir(dir);

@@ -1,4 +1,4 @@
 param=value
 hello=world
 
-file=/tmp
+filepath=/home
