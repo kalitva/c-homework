@@ -1,4 +1,6 @@
+#include <fcntl.h>
 #include <linux/limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -10,11 +12,14 @@
 #include "error_codes.h"
 #include "file_size.h"
 
-static int send_response(const char* path, int sd);
+static volatile int keep_running = 1;
+
+static void send_response(const char* path, int sd);
+static void sigint_handler();
 
 int listen_file(const char* path)
 {
-  int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+  int sock_fd = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
   if (sock_fd < 0) {
     return OPEN_SOCKET_ERROR;
   }
@@ -29,19 +34,10 @@ int listen_file(const char* path)
 
   int bytes_read;
   char buf[1024];
-  for (;;) {
+  signal(SIGINT, sigint_handler);
+  while (keep_running) {
     int msg_fd = accept(sock_fd, 0, 0);
-    do {
-      bzero(buf, sizeof(buf));
-      bytes_read = read(msg_fd, buf, 1024);
-      if (bytes_read != 0) {
-        int code = send_response(path, msg_fd);
-        if (code != 0) {
-          close(msg_fd);
-          return code;
-        }
-      }
-    } while (bytes_read > 0);
+    send_response(path, msg_fd);
     close(msg_fd);
   }
 
@@ -51,17 +47,22 @@ int listen_file(const char* path)
   return 0;
 }
 
-static int send_response(const char* path, int msg_fd)
+static void send_response(const char* path, int msg_fd)
 {
   long file_size;
   int code = get_file_size(path, &file_size);
   if (code == FILE_NOT_FOUND_ERROR) {
-    return FILE_NOT_FOUND_ERROR;
+    char* message = "file not found\n";
+    send(msg_fd, message, strlen(message), 0);
+    return;
   }
 
   char size[20];
   sprintf(size, "%ld\n", file_size);
   send(msg_fd, size, strlen(size), 0);
+}
 
-  return 0;
+static void sigint_handler()
+{
+  keep_running = 0;
 }
