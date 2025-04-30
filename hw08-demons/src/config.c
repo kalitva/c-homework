@@ -2,56 +2,43 @@
 #include <stdlib.h>
 #include <search.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "error_codes.h"
 
-static FILE* config = NULL;
-static char* filepath = NULL;
+static void parse(const char* path, struct config* config);
 
-static int find_value(const char* param_name, char* value);
-
-int init_config(const char* config_path)
+int create_config(const char* path, struct config* config)
 {
-  config = fopen(config_path, "r");
-  if (!config) {
+  if (access(path, F_OK) != 0) {
     return CONFIG_NOT_FOUND_ERROR;
+  }
+  config->demonized = false;
+  config->filepath = NULL;
+  parse(path, config);
+
+  if (!config->filepath) {
+    return FILEPATH_PARAM_NOT_FOUND_ERROR;
   }
 
   return 0;
 }
 
-int get_filepath(char* filepath_dest)
+void destroy_config(struct config* config)
 {
-  if (filepath) {
-    strcpy(filepath_dest, filepath);
-    return 0;
-  }
-
-  int code = find_value("filepath", filepath_dest);
-  if (code == 0) {
-    filepath = malloc(CONFIG_MAX_LINE);
-    strcpy(filepath, filepath_dest);
-  }
-
-  return code;
-}
-
-void destroy_config()
-{
-  fclose(config);
-  if (filepath) {
-    free(filepath);
+  if (config->filepath) {
+    free(config->filepath);
   }
 }
 
-static int find_value(const char* param_name, char* param_value)
+static void parse(const char* path, struct config* config)
 {
-  fseek(config, 0, SEEK_SET);
+  FILE* file = fopen(path, "r");
+
   char* line = NULL;
   size_t length = 0;
-
-  while ((getline(&line, &length, config)) != EOF) {
+  while ((getline(&line, &length, file)) != EOF) {
     int i = 0;
     while (line[i] != '\n') {
       if (line[i++] == PARAM_VALUE_SEPARATOR) {
@@ -59,20 +46,22 @@ static int find_value(const char* param_name, char* param_value)
         strncpy(param, line, i - 1);
         param[i - 1] = 0;
 
-        if (strcmp(param_name, param) != 0) {
-          continue;
-        }
-
         char value[CONFIG_MAX_LINE];
         strncpy(value, line + i, strlen(line) - i - 1);
         value[strlen(line) - i - 1] = 0;
-        strcpy(param_value, value);
 
-        free(line);
-        return 0;
+        if (strcmp("filepath", param) == 0) {
+          config->filepath = malloc(strlen(value));
+          strcpy(config->filepath, value);
+        } else if (strcmp("daemonized", param) == 0) {
+          config->demonized = strcmp(value, "true") == 0 ? true : false;
+        }
       }
     }
   }
 
-  return PARAM_NOT_FOUND_ERROR;
+  if (line) {
+    free(line);
+  }
+  fclose(file);
 }

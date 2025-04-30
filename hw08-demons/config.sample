@@ -1,4 +1,3 @@
-param=value
-hello=world
-
 filepath=/home
+daemonized=true
+logfile=server.log

@@ -7,13 +7,12 @@
 #include <unistd.h>
 
 #include "file_size_socket.h"
-#include "config.h"
 #include "error_codes.h"
 #include "file_size.h"
 
-static int send_response(int sd);
+static int send_response(const char* path, int sd);
 
-int listen_file()
+int listen_file(const char* path)
 {
   int sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sock_fd < 0) {
@@ -34,11 +33,13 @@ int listen_file()
     int msg_fd = accept(sock_fd, 0, 0);
     do {
       bzero(buf, sizeof(buf));
-      bytes_read = read(msg_fd , buf, 1024);
-      int code = send_response(msg_fd);
-      if (code != 0) {
-        close(msg_fd);
-        return code;
+      bytes_read = read(msg_fd, buf, 1024);
+      if (bytes_read != 0) {
+        int code = send_response(path, msg_fd);
+        if (code != 0) {
+          close(msg_fd);
+          return code;
+        }
       }
     } while (bytes_read > 0);
     close(msg_fd);
@@ -50,16 +51,10 @@ int listen_file()
   return 0;
 }
 
-static int send_response(int msg_fd)
+static int send_response(const char* path, int msg_fd)
 {
-  char path[PATH_MAX];
-  int code = get_filepath(path);
-  if (code == PARAM_NOT_FOUND_ERROR) {
-    return PARAM_NOT_FOUND_ERROR;
-  }
-
   long file_size;
-  code = get_file_size(path, &file_size);
+  int code = get_file_size(path, &file_size);
   if (code == FILE_NOT_FOUND_ERROR) {
     return FILE_NOT_FOUND_ERROR;
   }
