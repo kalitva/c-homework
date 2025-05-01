@@ -1,8 +1,10 @@
 #include <fcntl.h>
+#include <errno.h>
 #include <linux/limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -37,8 +39,12 @@ int listen_file(const char* path)
   signal(SIGINT, sigint_handler);
   while (keep_running) {
     int msg_fd = accept(sock_fd, 0, 0);
-    send_response(path, msg_fd);
-    close(msg_fd);
+    if (msg_fd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+      usleep(1000);
+    } else {
+      send_response(path, msg_fd);
+      close(msg_fd);
+    }
   }
 
   close(sock_fd);
