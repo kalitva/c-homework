@@ -9,10 +9,11 @@
 struct config {
   char* filepath;
   bool demonized;
+  char* logfile;
+  char* homedir;
 };
 
 int create_config(const char* path, struct config*);
-int get_filepath(char* filepath_dest);
 void destroy_config(struct config*);
 
 #endif

@@ -16,6 +16,9 @@ int create_config(const char* path, struct config* config)
   }
   config->demonized = false;
   config->filepath = NULL;
+  config->logfile = NULL;
+  config->homedir = NULL;
+
   parse(path, config);
 
   if (!config->filepath) {
@@ -29,6 +32,12 @@ void destroy_config(struct config* config)
 {
   if (config->filepath) {
     free(config->filepath);
+  }
+  if (config->logfile) {
+    free(config->logfile);
+  }
+  if (config->homedir) {
+    free(config->homedir);
   }
 }
 
@@ -55,6 +64,12 @@ static void parse(const char* path, struct config* config)
           strcpy(config->filepath, value);
         } else if (strcmp("daemonized", param) == 0) {
           config->demonized = strcmp(value, "true") == 0 ? true : false;
+        } else if (strcmp("logfile", param) == 0) {
+          config->logfile = malloc(strlen(value));
+          strcpy(config->logfile, value);
+        } else if (strcmp("homedir", param) == 0) {
+          config->homedir = malloc(strlen(value));
+          strcpy(config->homedir, value);
         }
       }
     }
