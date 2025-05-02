@@ -78,10 +78,13 @@ static void daemonize(struct config* config)
   }
 
   umask(0);
-  chdir(config->homedir ? config->homedir : ".");
 
   char* logfile = config->logfile ? config->logfile : "server.log";
   freopen("/dev/null", "a+", stdin);
   freopen(logfile,"a+", stderr);
   freopen(logfile,"a+", stdout);
+
+  if (chdir(config->homedir ? config->homedir : ".") != 0) {
+    printf("couldn't change process home dir\n");
+  }
 }
