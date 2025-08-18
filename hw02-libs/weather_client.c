@@ -15,9 +15,14 @@ static char* get_json_string(json_object* json, char* key);
 
 weather* get_weather(char* city)
 {
-  memory mem;
-  mem.buf= malloc(1);
-  mem.size = 0;
+
+  struct Point { int x; int y; };
+  struct Point p = { 1, 1 };
+
+  memory mem = {
+    .buf = malloc(1),
+    .size = 0,
+  };
 
   char url[50];
   sprintf(url, "http://wttr.in/%s?format=j1", city);
