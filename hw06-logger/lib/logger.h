@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#define LOG_MESSAGE_FORMAT "%s [%s] '%s'in %s line:%d\n"
+#define LOG_MESSAGE_FORMAT "%s [%s] '%s' in %s line:%d\n"
 
 #define FILE_NOT_FOUND_ERROR 1
 #define WRITE_FILE_ERROR 2
@@ -20,7 +20,6 @@ typedef enum {
 typedef struct logger logger;
 
 logger* log_init(char* filename, log_level level);
-void log_set_level(logger* logger, log_level level);
 void log_clean(logger* logger);
 
 #define log_trace(logger, message) (_log_internal(logger, TRACE, message, __func__, __LINE__))

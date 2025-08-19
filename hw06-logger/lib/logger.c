@@ -37,11 +37,6 @@ logger* log_init(char* filename, log_level level)
 
 static pthread_mutex_t mutex;
 
-void log_set_level(logger* logger, log_level level)
-{
-  logger->level = level;
-}
-
 void log_clean(logger* logger)
 {
   fclose(logger->file);
