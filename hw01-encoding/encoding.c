@@ -19,17 +19,13 @@ const char** const maps[] = {
   [ISO_8859_5] = iso_8895_5_map,
 };
 
-static int encoding_key_by_string(const char* encoding);
-
-char* convert(const char* filename, const char* encoding)
+char* convert(FILE* file, enum encoding encoding)
 {
-  FILE* file = fopen(filename, "r");
   fseek(file, 0, SEEK_END);
   size_t file_size = ftell(file);
   fseek(file, 0, 0);
-
   char* buf = malloc(file_size * 2);
-  const char** map = maps[encoding_key_by_string(encoding)];
+  const char** map = maps[encoding];
 
   int c;
   int i = 0;
@@ -47,21 +43,14 @@ char* convert(const char* filename, const char* encoding)
   return buf;
 }
 
-
-bool is_encoding_supported(const char* encoding)
-{
-  return encoding_key_by_string(encoding) != -1;
-}
-
-static int encoding_key_by_string(const char* encoding)
+enum encoding encoding_from_string(const char* encoding)
 {
   int length = sizeof(encodings) / sizeof(*encodings);
-
   for (int i = 0; i < length; i++) {
     if (strcasecmp(encodings[i], encoding) == 0) {
       return i;
     }
   }
 
-  return -1;
+  return UNDEFINED_ENCODING;
 }

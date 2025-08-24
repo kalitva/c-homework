@@ -11,7 +11,7 @@ int main(int argc, char** argv)
     printf("warning: only the first file is processed\n");
   }
 
-  char* filename = argv[1];
+  const char* filename = argv[1];
   FILE* file = fopen(filename, "rb");
 
   if (!file) {

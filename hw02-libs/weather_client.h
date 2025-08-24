@@ -9,7 +9,7 @@ typedef struct {
   size_t size;
 } memory;
 
-weather* get_weather(char* city);
+weather* get_weather(const char* city);
 void weather_free(weather* weather);
 
 #endif

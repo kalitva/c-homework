@@ -13,12 +13,8 @@ static size_t write_response(void* response, size_t size, size_t nmemb, memory* 
 static weather* response_to_weather(memory* mem);
 static char* get_json_string(json_object* json, char* key);
 
-weather* get_weather(char* city)
+weather* get_weather(const char* city)
 {
-
-  struct Point { int x; int y; };
-  struct Point p = { 1, 1 };
-
   memory mem = {
     .buf = malloc(1),
     .size = 0,
