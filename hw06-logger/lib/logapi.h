@@ -1,6 +1,9 @@
 #ifndef LOGAPI_H
 #define LOGAPI_H
 
+#define FILE_NOT_FOUND_ERROR 1
+#define MEMORY_ALLOCATION_ERROR 2
+
 typedef struct logger logger;
 
 typedef enum {

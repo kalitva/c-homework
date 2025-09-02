@@ -7,9 +7,6 @@
 
 #define LOG_MESSAGE_FORMAT "%s [%s] '%s' in %s line:%d\n"
 
-#define FILE_NOT_FOUND_ERROR 1
-#define MEMORY_ALLOCATION_ERROR 2
-
 logger* log_init_internal(char* filename, log_level level);
 void log_clean_internal(logger* logger);
 
