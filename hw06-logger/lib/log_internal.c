@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "logger.h"
 #include "log_helper.h"
+#include "log_internal.h"
 
 struct logger {
   FILE* file;
@@ -13,15 +13,14 @@ struct logger {
 };
 
 const char* const levels[] = {
-  [TRACE] = "TRACE",
-  [DEBUG] = "DEBUG",
-  [INFO] = "INFO",
-  [WARN] = "WARN",
-  [ERROR] = "ERROR",
+    [TRACE] = "TRACE",
+    [DEBUG] = "DEBUG",
+    [INFO] = "INFO",
+    [WARN] = "WARN",
+    [ERROR] = "ERROR",
 };
 
-logger* log_init(char* filename, log_level level)
-{
+logger* log_init_internal(char* filename, log_level level) {
   logger* logger = malloc(sizeof(struct logger));
   logger->file = fopen(filename, "a+");
   logger->level = level;
@@ -37,16 +36,18 @@ logger* log_init(char* filename, log_level level)
 
 static pthread_mutex_t mutex;
 
-void log_clean(logger* logger)
-{
+void log_clean_internal(logger* logger) {
   fclose(logger->file);
   free(logger);
 }
 
-int _log_internal(logger* logger, log_level level, char* message, const char* caller, int line)
-{
+void log_internal(logger* logger,
+    log_level level,
+    const char* message,
+    const char* caller,
+    int line) {
   if (level < logger->level) {
-    return 0;
+    return;
   }
 
   pthread_mutex_lock(&mutex);
@@ -55,22 +56,19 @@ int _log_internal(logger* logger, log_level level, char* message, const char* ca
     logger->error_code = MEMORY_ALLOCATION_ERROR;
     date_time = "";
   }
-  fprintf(logger->file, LOG_MESSAGE_FORMAT, date_time, levels[level], message, caller, line);
+  fprintf(logger->file, LOG_MESSAGE_FORMAT,
+      date_time, levels[level], message, caller, line);
   char* stack_trace = NULL;
   if (level == ERROR) {
     stack_trace = get_stack_trace();
     if (stack_trace) {
       fprintf(logger->file, "%s\n", stack_trace);
+      free(stack_trace);
     } else {
       logger->error_code = MEMORY_ALLOCATION_ERROR;
     }
   }
-  pthread_mutex_unlock (&mutex);
 
-  if (stack_trace) {
-    free(stack_trace);
-  }
+  pthread_mutex_unlock(&mutex);
   free(date_time);
-
-  return logger->error_code;
 }

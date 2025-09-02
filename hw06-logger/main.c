@@ -1,6 +1,6 @@
 #include <unistd.h>
 
-#include "lib/logger.h"
+#include "lib/logapi.h"
 
 void nested_func_1(logger* logger)
 {
