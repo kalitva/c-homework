@@ -7,11 +7,11 @@ set(CMAKE_C_STANDARD_REQUIRED true)
 ADD_LINK_OPTIONS(-rdynamic)
 
 add_library(logger STATIC
-  lib/log_internal.c lib/log_internal.h
-  lib/log_helper.c lib/log_helper.h
-	lib/logapi.c lib/logapi.h
+  src/log_internal.c src/log_internal.h
+  src/log_helper.c src/log_helper.h
+	src/logapi.c src/logapi.h
 )
-set_target_properties(logger PROPERTIES PUBLIC_HEADER lib/logger.h)
+set_target_properties(logger PROPERTIES PUBLIC_HEADER src/logger.h)
 
 add_executable(lib_demo main.c)
 target_link_libraries(lib_demo logger)
