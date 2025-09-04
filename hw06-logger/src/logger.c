@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "log_helper.h"
-#include "log_internal.h"
+#include "logger.h"
 
 struct logger {
   FILE* file;
@@ -20,47 +20,52 @@ const char* const levels[] = {
     [ERROR] = "ERROR",
 };
 
-logger* log_init_internal(char* filename, log_level level) {
+logger* log_init(const char* filename, log_level level) {
   logger* logger = malloc(sizeof(struct logger));
+  if (!logger) {
+    return NULL;
+  }
   logger->file = fopen(filename, "a+");
   logger->level = level;
   logger->error_code = 0;
 
   if (!logger->file) {
     logger->error_code = FILE_NOT_FOUND_ERROR;
-    return NULL;
   }
 
   return logger;
 }
 
-static pthread_mutex_t mutex;
-
-void log_clean_internal(logger* logger) {
+void log_clean(logger* logger) {
   fclose(logger->file);
   free(logger);
 }
 
-void log_internal(logger* logger,
+static pthread_mutex_t mutex;
+
+void _log_internal(logger* logger,
     log_level level,
-    const char* message,
+    char* message,
     const char* caller,
     int line) {
   if (level < logger->level) {
     return;
   }
 
-  pthread_mutex_lock(&mutex);
   char* date_time = current_date_time();
   if (!date_time) {
     logger->error_code = MEMORY_ALLOCATION_ERROR;
-    date_time = "";
+    return;
   }
+
+  pthread_mutex_lock(&mutex);
+
   fprintf(logger->file, LOG_MESSAGE_FORMAT,
       date_time, levels[level], message, caller, line);
-  char* stack_trace = NULL;
+  free(date_time);
+
   if (level == ERROR) {
-    stack_trace = get_stack_trace();
+    char* stack_trace = get_stack_trace();
     if (stack_trace) {
       fprintf(logger->file, "%s\n", stack_trace);
       free(stack_trace);
@@ -70,5 +75,4 @@ void log_internal(logger* logger,
   }
 
   pthread_mutex_unlock(&mutex);
-  free(date_time);
 }
