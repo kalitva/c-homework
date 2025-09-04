@@ -4,9 +4,8 @@ project(lib_demo C)
 add_compile_options(-Wall -Wextra -Wpedantic)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED true)
-ADD_LINK_OPTIONS(-rdynamic)
 
-add_library(logger STATIC
+add_library(logger SHARED
   src/logger.c src/logger.h
   src/log_helper.c src/log_helper.h
 )
