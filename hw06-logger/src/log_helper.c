@@ -10,7 +10,7 @@
 char* current_date_time() {
   char date_time[20];
   time_t now = time(0);
-  strftime(date_time, 100, DATE_TIME_FORMAT, localtime(&now));
+  strftime(date_time, 20, DATE_TIME_FORMAT, localtime(&now));
 
   struct timeval time;
   gettimeofday(&time, NULL);

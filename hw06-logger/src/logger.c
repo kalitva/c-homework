@@ -45,7 +45,7 @@ static pthread_mutex_t mutex;
 
 void _log_internal(logger* logger,
     log_level level,
-    char* message,
+    const char* message,
     const char* caller,
     int line) {
   if (level < logger->level) {
