@@ -1,8 +1,8 @@
 #ifndef WEATHER_CLIENT_H
 #define WEATHER_CLIENT_H
 
-#include "weather.h"
 #include <stddef.h>
+#include "weather.h"
 
 typedef struct {
   char* buf;

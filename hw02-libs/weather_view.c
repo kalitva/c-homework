@@ -1,9 +1,7 @@
 #include "weather_view.h"
-#include "weather.h"
 #include <stdio.h>
 
-void print_weather(weather* w)
-{
+void print_weather(weather* w) {
   printf("--------- WEATHER CURRENT CONDITIONS -----------\n");
   printf("temperature: %s\n", w->conditions.temperature);
   printf("cloudcover: %s\n", w->conditions.cloudcover);

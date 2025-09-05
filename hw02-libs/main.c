@@ -5,9 +5,7 @@
 #include "weather_client.h"
 #include "weather_view.h"
 
-
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
   if (argc < 2) {
     printf("city is required\n");
     return 1;

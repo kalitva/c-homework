@@ -1,23 +1,25 @@
 #include <curl/curl.h>
+#include <json-c/json.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <json-c/json.h>
 
-#include "weather_client.h"
 #include "weather.h"
+#include "weather_client.h"
 
-static size_t write_response(void* response, size_t size, size_t nmemb, memory* mem);
+static size_t write_response(void* response,
+                             size_t size,
+                             size_t nmemb,
+                             memory* mem);
 static weather* response_to_weather(memory* mem);
 static char* get_json_string(json_object* json, char* key);
 
-weather* get_weather(const char* city)
-{
+weather* get_weather(const char* city) {
   memory mem = {
-    .buf = malloc(1),
-    .size = 0,
+      .buf = malloc(1),
+      .size = 0,
   };
 
   char url[50];
@@ -45,8 +47,7 @@ weather* get_weather(const char* city)
   return w;
 }
 
-void weather_free(weather* w)
-{
+void weather_free(weather* w) {
   day_forecast* df = w->forecast;
   for (int i = 0; i < w->days; i++) {
     free(df[i].date);
@@ -64,8 +65,7 @@ void weather_free(weather* w)
   free(w);
 }
 
-static weather* response_to_weather(memory* mem)
-{
+static weather* response_to_weather(memory* mem) {
   weather* w = malloc(sizeof(weather));
   w->has_error = false;
   json_object* root = json_tokener_parse(mem->buf);
@@ -77,10 +77,11 @@ static weather* response_to_weather(memory* mem)
     return w;
   }
 
-  json_object* cc = json_object_array_get_idx(json_object_object_get(root, "current_condition"), 0);
+  json_object* cc = json_object_array_get_idx(
+      json_object_object_get(root, "current_condition"), 0);
   w->conditions.cloudcover = get_json_string(cc, "cloudcover");
   w->conditions.temperature = get_json_string(cc, "temp_C");
-  w->conditions.humidity = get_json_string(cc , "humidity");
+  w->conditions.humidity = get_json_string(cc, "humidity");
   w->conditions.pressure = get_json_string(cc, "pressure");
   w->conditions.visibility = get_json_string(cc, "visibility");
 
@@ -88,7 +89,7 @@ static weather* response_to_weather(memory* mem)
   w->days = json_object_array_length(days);
   w->forecast = malloc(w->days * sizeof(day_forecast));
 
-  for (int i = 0; i < w->days ; i++) {
+  for (int i = 0; i < w->days; i++) {
     json_object* day = json_object_array_get_idx(days, i);
     day_forecast* df = &(w->forecast[i]);
     df->date = get_json_string(day, "date");
@@ -102,8 +103,7 @@ static weather* response_to_weather(memory* mem)
   return w;
 }
 
-static char* get_json_string(json_object* json, char* key)
-{
+static char* get_json_string(json_object* json, char* key) {
   const char* src = json_object_get_string(json_object_object_get(json, key));
   char* dest = malloc(strlen(src));
   strcpy(dest, src);
@@ -111,8 +111,10 @@ static char* get_json_string(json_object* json, char* key)
   return dest;
 }
 
-static size_t write_response(void* response, size_t size, size_t nmemb, memory* mem)
-{
+static size_t write_response(void* response,
+                             size_t size,
+                             size_t nmemb,
+                             memory* mem) {
   size_t realsize = size * nmemb;
   mem->buf = realloc(mem->buf, mem->size + realsize + 1);
 
